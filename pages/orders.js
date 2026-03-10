@@ -5,6 +5,7 @@ import axios from "axios";
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sortDir, setSortDir] = useState('desc'); // 'desc' (най-нови първо) или 'asc'
 
   useEffect(() => {
     setLoading(true);
@@ -13,6 +14,22 @@ export default function OrdersPage() {
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const sortedOrders = [...orders].sort((a, b) => {
+    const da = new Date(a.createdAt).getTime();
+    const db = new Date(b.createdAt).getTime();
+    return sortDir === 'desc' ? db - da : da - db;
+  });
+
+  async function deleteOrder(id) {
+    if (!window.confirm('Сигурни ли сте, че искате да изтриете тази поръчка?')) return;
+    try {
+      await axios.delete('/api/orders', { params: { id } });
+      setOrders(prev => prev.filter(o => o._id !== id));
+    } catch (e) {
+      alert('Грешка при изтриване на поръчката.');
+    }
+  }
 
   return (
     <Layout>
@@ -25,17 +42,23 @@ export default function OrdersPage() {
         <table className="basic mt-4">
           <thead>
             <tr>
-              <th>Дата</th>
+              <th
+                style={{cursor: 'pointer'}}
+                onClick={() => setSortDir(d => (d === 'desc' ? 'asc' : 'desc'))}
+              >
+                Дата {sortDir === 'desc' ? '↓' : '↑'}
+              </th>
               <th>Клиент</th>
               <th>Имейл</th>
               <th>Телефон</th>
               <th>Адрес</th>
               <th>Платена</th>
               <th>Метод</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {orders.map(order => (
+            {sortedOrders.map(order => (
               <tr key={order._id}>
                 <td>{new Date(order.createdAt).toLocaleString('bg-BG')}</td>
                 <td>{order.name}</td>
@@ -48,6 +71,14 @@ export default function OrdersPage() {
                   {order.paid ? 'Да' : 'Не'}
                 </td>
                 <td>{order.paymentMethod || 'cash'}</td>
+                <td>
+                  <button
+                    onClick={() => deleteOrder(order._id)}
+                    className="btn-red"
+                  >
+                    Изтрий
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -17,8 +17,24 @@ export default async function handle(req, res) {
     } catch (e) {
       res.status(500).json({error: 'Грешка при зареждане на поръчките.'});
     }
-  } else {
-    res.status(405).end();
+    return;
   }
+
+  if (method === 'DELETE') {
+    const {id} = req.query;
+    if (!id) {
+      res.status(400).json({error: 'Липсва ID на поръчка.'});
+      return;
+    }
+    try {
+      await Order.findByIdAndDelete(id);
+      res.json({success: true});
+    } catch (e) {
+      res.status(500).json({error: 'Грешка при изтриване на поръчката.'});
+    }
+    return;
+  }
+
+  res.status(405).end();
 }
 
