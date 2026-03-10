@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "pages/api/upload.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --include=optional && npm rebuild sharp --platform=linux --arch=x64"
+}
+
