@@ -18,6 +18,7 @@ function SettingsPage({swal}) {
   const [isUploadingDesktop, setIsUploadingDesktop] = useState(false);
   const [isUploadingMobile, setIsUploadingMobile] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [shippingPrice, setShippingPrice] = useState('');
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -71,6 +72,9 @@ function SettingsPage({swal}) {
       if (result.data.heroSubtitle) {
         setHeroSubtitle(result.data.heroSubtitle);
       }
+      if (result.data.shippingPrice !== undefined && result.data.shippingPrice !== null) {
+        setShippingPrice(result.data.shippingPrice);
+      }
     });
   }
 
@@ -81,6 +85,7 @@ function SettingsPage({swal}) {
     try {
       await axios.post('/api/settings', {
         featuredProductId,
+        shippingPrice,
         heroMediaType,
         heroVideoDesktop,
         heroVideoMobile,
@@ -121,7 +126,16 @@ function SettingsPage({swal}) {
             </option>
           ))}
         </select>
-        
+
+        <label className="mt-4 block">Цена на доставка (в EUR)</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="пример: 5.90"
+          value={shippingPrice}
+          onChange={ev => setShippingPrice(ev.target.value)}
+        />
 
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-4">Начална страница Hero настройки</h2>

@@ -127,8 +127,8 @@ export default function ProductForm({
         onChange={ev => setStock(parseInt(ev.target.value || '0',10))}
       />
 
-      {propertiesToFill.length > 0 && propertiesToFill.map(p => (
-        <div key={p.name} className="">
+      {propertiesToFill.length > 0 && propertiesToFill.map((p, index) => (
+        <div key={p._id || `${p.name}-${index}`} className="">
           <label>{p.name[0].toUpperCase()+p.name.substring(1)}</label>
           <div>
             <select
@@ -153,9 +153,17 @@ export default function ProductForm({
           {!!images?.length && images.map(link => (
             <div
               key={link}
-              className="h-24 bg-white p-4 shadow-sm rounded-sm border border-gray-200"
+              className="relative h-24 bg-white p-4 shadow-sm rounded-sm border border-gray-200"
             >
-              <img src={link} alt="" className="rounded-lg"/>
+              <button
+                type="button"
+                onClick={() => setImages(old => old.filter(img => img !== link))}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center shadow"
+                title="Изтрий снимката"
+              >
+                ×
+              </button>
+              <img src={link} alt="" className="rounded-lg h-full w-auto object-cover"/>
             </div>
           ))}
         </ReactSortable>
@@ -182,7 +190,7 @@ export default function ProductForm({
         onChange={ev => setDescription(ev.target.value)}
       />
 
-      <label>Цена (в BGN)</label>
+      <label>Цена (в EUR)</label>
       <input
         type="number"
         placeholder="цена"
