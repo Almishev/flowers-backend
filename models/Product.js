@@ -4,6 +4,7 @@ import mongoose, {model, Schema, models} from "mongoose";
 const ProductSchema = new Schema({
   // Основна информация
   title: { type: String, required: true },      // Име на продукта (букет, кошница и т.н.)
+  slug: { type: String, unique: true, sparse: true }, // SEO-friendly URL slug
   description: String,
 
   // Цена
