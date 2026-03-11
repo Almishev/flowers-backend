@@ -11,6 +11,7 @@ const OrderSchema = new Schema({
   country: String,
   paid: Boolean,
   paymentMethod: String, // 'cash' (наложен платеж)
+  total: Number,         // обща сума в EUR
 }, {
   timestamps: true,
 });

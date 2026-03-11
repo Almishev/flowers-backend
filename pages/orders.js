@@ -52,6 +52,8 @@ export default function OrdersPage() {
               <th>Имейл</th>
               <th>Телефон</th>
               <th>Адрес</th>
+              <th>Продукти</th>
+              <th>Общо</th>
               <th>Платена</th>
               <th>Метод</th>
               <th></th>
@@ -66,6 +68,32 @@ export default function OrdersPage() {
                 <td>{order.phone}</td>
                 <td>
                   {order.streetAddress}, {order.postalCode} {order.city}, {order.country}
+                </td>
+                <td>
+                  {Array.isArray(order.line_items) && order.line_items.length > 0 ? (
+                    <ul style={{margin: 0, paddingLeft: '18px'}}>
+                      {order.line_items.map((item, index) => (
+                        <li key={index}>
+                          {item.price_data?.product_data?.name || 'Продукт'} × {item.quantity || 1}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span style={{color: '#6b7280'}}>Няма данни</span>
+                  )}
+                </td>
+                <td>
+                  {typeof order.total === 'number'
+                    ? `${order.total.toFixed(2)} EUR`
+                    : (
+                      Array.isArray(order.line_items)
+                        ? `${(order.line_items.reduce((sum, item) => {
+                            const qty = item.quantity || 0;
+                            const amount = item.price_data?.unit_amount || 0;
+                            return sum + qty * amount;
+                          }, 0) / 100).toFixed(2)} EUR`
+                        : '—'
+                    )}
                 </td>
                 <td className={order.paid ? 'text-green-600' : 'text-red-600'}>
                   {order.paid ? 'Да' : 'Не'}
