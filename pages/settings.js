@@ -11,8 +11,8 @@ function SettingsPage({swal}) {
   const [heroVideoDesktop, setHeroVideoDesktop] = useState('');
   const [heroVideoMobile, setHeroVideoMobile] = useState('');
   const [heroImage, setHeroImage] = useState('');
-  const [heroTitle, setHeroTitle] = useState('Travel Agency');
-  const [heroSubtitle, setHeroSubtitle] = useState('незабравими пътувания и екскурзии');
+  const [heroTitle, setHeroTitle] = useState('Парфюмен магазин');
+  const [heroSubtitle, setHeroSubtitle] = useState('оригинални парфюми и аромати');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isUploadingDesktop, setIsUploadingDesktop] = useState(false);
@@ -27,14 +27,11 @@ function SettingsPage({swal}) {
   }, []);
 
   function fetchProducts() {
-    // За settings страницата искаме всички екскурзии, затова използваме голям limit
-    axios.get('/api/trips?limit=1000').then(result => {
-      // API връща {products: [...], pagination: {...}} – тук products са екскурзии
-      if (result.data.products) {
-        setProducts(result.data.products);
-      } else if (Array.isArray(result.data)) {
-        // Fallback за стари версии на API
+    axios.get('/api/products').then(result => {
+      if (Array.isArray(result.data)) {
         setProducts(result.data);
+      } else if (result.data.products) {
+        setProducts(result.data.products);
       } else {
         setProducts([]);
       }
@@ -42,7 +39,7 @@ function SettingsPage({swal}) {
       console.error('Error fetching products:', error);
       swal.fire({
         title: 'Грешка!',
-        text: 'Неуспешно зареждане на екскурзиите',
+        text: 'Неуспешно зареждане на продуктите',
         icon: 'error',
       });
       setProducts([]);
@@ -114,12 +111,12 @@ function SettingsPage({swal}) {
     <Layout>
       <h1>Настройки</h1>
       <form onSubmit={saveSettings} className="max-w-md">
-        <label>Препоръчана екскурзия за началната страница</label>
+        <label>Препоръчан парфюм за началната страница</label>
         <select 
           value={featuredProductId}
           onChange={ev => setFeaturedProductId(ev.target.value)}
         >
-          <option value="">Избери екскурзия</option>
+          <option value="">Избери продукт</option>
           {products.length > 0 && products.map(product => (
             <option key={product._id} value={product._id}>
               {product.title}
@@ -143,7 +140,7 @@ function SettingsPage({swal}) {
           <label>Заглавие на Hero секцията</label>
           <input 
             type="text" 
-            placeholder="Travel Agency"
+            placeholder="Парфюмен магазин"
             value={heroTitle}
             onChange={ev => setHeroTitle(ev.target.value)}
           />
@@ -151,7 +148,7 @@ function SettingsPage({swal}) {
           <label>Подзаглавие на Hero секцията</label>
           <input 
             type="text" 
-            placeholder="незабравими пътувания и екскурзии"
+            placeholder="оригинални парфюми и аромати"
             value={heroSubtitle}
             onChange={ev => setHeroSubtitle(ev.target.value)}
           />

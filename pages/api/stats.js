@@ -4,7 +4,7 @@ import {Product} from "@/models/Product";
 export default async function handler(req,res) {
   await mongooseConnect();
 
-  // Статистики за продукти (букети)
+  // Статистики за продукти (парфюми)
   // Не броим архивирани продукти в нито една от метриките
   const baseQuery = { status: { $ne: "archived" } };
 

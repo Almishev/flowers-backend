@@ -13,6 +13,10 @@ export default function ProductForm({
   category:assignedCategory,
   properties:assignedProperties,
   stock:existingStock,
+  brand:existingBrand,
+  volume:existingVolume,
+  concentration:existingConcentration,
+  gender:existingGender,
 }) {
   const [title,setTitle] = useState(existingTitle || '');
   const [description,setDescription] = useState(existingDescription || '');
@@ -21,6 +25,10 @@ export default function ProductForm({
   const [price,setPrice] = useState(existingPrice || '');
   const [images,setImages] = useState(existingImages || []);
   const [stock,setStock] = useState(existingStock ?? 0);
+  const [brand,setBrand] = useState(existingBrand || '');
+  const [volume,setVolume] = useState(existingVolume || '');
+  const [concentration,setConcentration] = useState(existingConcentration || '');
+  const [gender,setGender] = useState(existingGender || '');
   const [goToProducts,setGoToProducts] = useState(false);
   const [isUploading,setIsUploading] = useState(false);
   const [categories,setCategories] = useState([]);
@@ -37,6 +45,10 @@ export default function ProductForm({
     const data = {
       title,
       description,
+      brand,
+      volume,
+      concentration,
+      gender,
       price,
       images,
       category,
@@ -99,13 +111,21 @@ export default function ProductForm({
 
   return (
     <form onSubmit={saveProduct}>
-      <label>Име на продукта</label>
+      <label>Име на парфюма</label>
       <input
         type="text"
-        placeholder="име на продукта"
+        placeholder="напр. Chanel N°5 Eau de Parfum"
         value={title}
         onChange={ev => setTitle(ev.target.value)}
         required
+      />
+
+      <label>Марка</label>
+      <input
+        type="text"
+        placeholder="напр. Chanel, Dior, Versace"
+        value={brand}
+        onChange={ev => setBrand(ev.target.value)}
       />
 
       <label>Категория</label>
@@ -117,6 +137,44 @@ export default function ProductForm({
         {categories.length > 0 && categories.map(c => (
           <option key={c._id} value={c._id}>{c.name}</option>
         ))}
+      </select>
+
+      <label>За кого е</label>
+      <select
+        value={gender}
+        onChange={ev => setGender(ev.target.value)}
+      >
+        <option value="">Не е посочено</option>
+        <option value="Дамски">Дамски</option>
+        <option value="Мъжки">Мъжки</option>
+        <option value="Унисекс">Унисекс</option>
+      </select>
+
+      <label>Концентрация</label>
+      <select
+        value={concentration}
+        onChange={ev => setConcentration(ev.target.value)}
+      >
+        <option value="">Не е посочено</option>
+        <option value="Parfum">Parfum</option>
+        <option value="Eau de Parfum">Eau de Parfum</option>
+        <option value="Eau de Toilette">Eau de Toilette</option>
+        <option value="Eau de Cologne">Eau de Cologne</option>
+        <option value="Body mist">Body mist</option>
+      </select>
+
+      <label>Обем</label>
+      <select
+        value={volume}
+        onChange={ev => setVolume(ev.target.value)}
+      >
+        <option value="">Не е посочено</option>
+        <option value="30 ml">30 ml</option>
+        <option value="50 ml">50 ml</option>
+        <option value="75 ml">75 ml</option>
+        <option value="100 ml">100 ml</option>
+        <option value="125 ml">125 ml</option>
+        <option value="200 ml">200 ml</option>
       </select>
 
       <label>Наличност (бр.)</label>
@@ -185,7 +243,7 @@ export default function ProductForm({
 
       <label>Описание</label>
       <textarea
-        placeholder="описание"
+        placeholder="описание на аромата, нотки, за какъв повод е подходящ"
         value={description}
         onChange={ev => setDescription(ev.target.value)}
       />

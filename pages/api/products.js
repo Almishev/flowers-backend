@@ -18,7 +18,7 @@ export default async function handle(req, res) {
   }
 
   if (method === 'POST') {
-    const {title,description,price,images,category,properties,stock} = req.body;
+    const {title,description,price,images,category,properties,stock,brand,volume,concentration,gender} = req.body;
 
     // Генерираме уникален slug на база заглавието
     const slug = await generateUniqueSlug(title, async (slugToCheck) => {
@@ -30,6 +30,10 @@ export default async function handle(req, res) {
       title,
       slug,
       description,
+      brand,
+      volume,
+      concentration,
+      gender,
       price,
       images,
       category,
@@ -40,7 +44,7 @@ export default async function handle(req, res) {
   }
 
   if (method === 'PUT') {
-    const {title,description,price,images,category,properties,_id,stock} = req.body;
+    const {title,description,price,images,category,properties,_id,stock,brand,volume,concentration,gender} = req.body;
 
     const existing = await Product.findById(_id);
 
@@ -54,7 +58,7 @@ export default async function handle(req, res) {
 
     await Product.updateOne(
       {_id},
-      {title, slug, description,price,images,category,properties,stock}
+      {title, slug, description, brand, volume, concentration, gender, price, images, category, properties, stock}
     );
     res.json(true);
   }

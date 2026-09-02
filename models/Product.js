@@ -1,22 +1,21 @@
 import mongoose, {model, Schema, models} from "mongoose";
 
-// Модел за продукт (букет) в онлайн магазина
 const ProductSchema = new Schema({
-  // Основна информация
-  title: { type: String, required: true },      // Име на продукта (букет, кошница и т.н.)
-  slug: { type: String, unique: true, sparse: true }, // SEO-friendly URL slug
+  title: { type: String, required: true },
+  slug: { type: String, unique: true, sparse: true },
   description: String,
+  brand: { type: String, default: "" },
+  volume: { type: String, default: "" },
+  concentration: { type: String, default: "" },
+  gender: { type: String, default: "" },
 
-  // Цена
   price: { type: Number, required: true },
-  currency: { type: String, default: "BGN" },
+  currency: { type: String, default: "EUR" },
 
-  // Медия и класификация
   images: [{ type: String }],
   category: { type: mongoose.Types.ObjectId, ref: "Category" },
-  properties: { type: Object },                 // Свойства по категория (напр. Тип цветя, Повод)
+  properties: { type: Object },
 
-  // Наличност (брой налични бройки)
   stock: { type: Number, default: 0 },
 }, {
   timestamps: true,

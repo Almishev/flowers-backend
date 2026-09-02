@@ -32,14 +32,14 @@ export default function Home() {
     
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="text-gray-500 text-sm">Общо продукти (букети)</div>
+        <div className="text-gray-500 text-sm">Общо продукти</div>
         <div className="text-3xl font-bold">{stats?.trips?.total ?? '-'}</div>
-        <div className="text-xs text-gray-400 mt-1">всички продукти в каталога</div>
+        <div className="text-xs text-gray-400 mt-1">парфюми и продукти в каталога</div>
       </div>
       <div className="bg-white rounded-lg shadow p-4">
         <div className="text-gray-500 text-sm">Продукти с наличност</div>
         <div className="text-3xl font-bold">{stats?.trips?.available ?? '-'}</div>
-        <div className="text-xs text-gray-400 mt-1">букети и продукти, които са налични</div>
+        <div className="text-xs text-gray-400 mt-1">парфюми, които са налични за продажба</div>
       </div>
       <div className="bg-white rounded-lg shadow p-4">
         <div className="text-gray-500 text-sm">Изчерпани продукти</div>

@@ -192,7 +192,7 @@ function Categories({swal}) {
                      value={property.name}
                      className="mb-0"
                      onChange={ev => handlePropertyNameChange(index,property,ev.target.value)}
-                     placeholder="име на свойството (пример: цвят)"/>
+                     placeholder="име на свойството (пример: ароматно семейство)"/>
               <input type="text"
                      className="mb-0"
                      onChange={ev =>
