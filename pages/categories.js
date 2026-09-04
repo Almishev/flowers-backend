@@ -5,14 +5,22 @@ import Spinner from "@/components/Spinner";
 import { withSwal } from 'react-sweetalert2';
 import Image from "next/image";
 
+function parentIdOf(category) {
+  if (!category?.parent) return '';
+  return category.parent._id || category.parent;
+}
+
 function Categories({swal}) {
   const [editedCategory, setEditedCategory] = useState(null);
   const [name,setName] = useState('');
   const [parentCategory,setParentCategory] = useState('');
+  const [navOrder,setNavOrder] = useState(0);
   const [categories,setCategories] = useState([]);
   const [properties,setProperties] = useState([]);
   const [image,setImage] = useState('');
   const [isUploading,setIsUploading] = useState(false);
+  const [saveError,setSaveError] = useState('');
+
   useEffect(() => {
     fetchCategories();
   }, [])
@@ -21,41 +29,71 @@ function Categories({swal}) {
       setCategories(result.data);
     });
   }
+
+  const roots = categories
+    .filter(c => !c.parent)
+    .sort((a, b) => (a.navOrder || 0) - (b.navOrder || 0) || a.name.localeCompare(b.name));
+
+  function childrenOf(rootId) {
+    return categories
+      .filter(c => parentIdOf(c) === rootId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  const treeRows = roots.flatMap(root => [
+    {category: root, isRoot: true},
+    ...childrenOf(root._id).map(child => ({category: child, isRoot: false})),
+  ]);
+
+  function resetForm() {
+    setEditedCategory(null);
+    setName('');
+    setParentCategory('');
+    setNavOrder(0);
+    setProperties([]);
+    setImage('');
+    setSaveError('');
+  }
+
   async function saveCategory(ev){
     ev.preventDefault();
+    setSaveError('');
     if (!name || !name.trim()) {
-      alert('Моля, въведете име на категорията');
+      setSaveError('Моля, въведете име на отдела или подкатегорията');
       return;
     }
     const data = {
       name: name.trim(),
       parentCategory,
       image,
+      navOrder: parentCategory ? 0 : Number(navOrder || 0),
       properties:properties.map(p => ({
         name:p.name,
         values:p.values.split(','),
       })),
     };
-    if (editedCategory) {
-      data._id = editedCategory._id;
-      await axios.put('/api/categories', data);
-      setEditedCategory(null);
-    } else {
-      await axios.post('/api/categories', data);
+    try {
+      if (editedCategory) {
+        data._id = editedCategory._id;
+        await axios.put('/api/categories', data);
+      } else {
+        await axios.post('/api/categories', data);
+      }
+      resetForm();
+      fetchCategories();
+    } catch (error) {
+      setSaveError(error.response?.data?.error || 'Грешка при запис на категорията');
     }
-    setName('');
-    setParentCategory('');
-    setProperties([]);
-    setImage('');
-    fetchCategories();
   }
   function editCategory(category){
     setEditedCategory(category);
     setName(category.name);
-    setParentCategory(category.parent?._id);
+    setParentCategory(parentIdOf(category));
+    setNavOrder(category.navOrder || 0);
     setImage(category.image || '');
+    setSaveError('');
     setProperties(
-      category.properties.map(({name,values}) => ({
+      (category.properties || []).map(({name,values}) => ({
       name,
       values:values.join(',')
     }))
@@ -68,17 +106,46 @@ function Categories({swal}) {
       showCancelButton: true,
       cancelButtonText: 'Отказ',
       confirmButtonText: 'Да, изтрий!',
-      confirmButtonColor: '#dc2626', // По-тъмно червено (red-600)
-      cancelButtonColor: '#4b5563', // Тъмно сиво (gray-600)
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#4b5563',
       reverseButtons: true,
     }).then(async result => {
       if (result.isConfirmed) {
         const {_id} = category;
-        await axios.delete('/api/categories?_id='+_id);
-        fetchCategories();
+        try {
+          await axios.delete('/api/categories?_id='+_id);
+          fetchCategories();
+        } catch (error) {
+          swal.fire({
+            icon: 'error',
+            title: 'Не може да се изтрие',
+            text: error.response?.data?.error || 'Грешка при изтриване',
+          });
+        }
       }
     });
   }
+
+  async function saveRootOrder(root, nextOrder) {
+    try {
+      await axios.put('/api/categories', {
+        _id: root._id,
+        name: root.name,
+        parentCategory: '',
+        image: root.image || '',
+        navOrder: Number(nextOrder || 0),
+        properties: root.properties || [],
+      });
+      fetchCategories();
+    } catch (error) {
+      swal.fire({
+        icon: 'error',
+        title: 'Грешка',
+        text: error.response?.data?.error || 'Неуспешна промяна на реда',
+      });
+    }
+  }
+
   function addProperty() {
     setProperties(prev => {
       return [...prev, {name:'',values:''}];
@@ -105,30 +172,56 @@ function Categories({swal}) {
       });
     });
   }
+  const isEditingRoot = editedCategory && !editedCategory.parent;
+  const creatingRoot = !parentCategory;
+
   return (
     <Layout>
       <h1>Категории</h1>
+      <p className="text-gray-500 text-sm mb-4">
+        Корен без родител = отдел (Парфюми, Козметика, Бижута). Дете = подкатегория, където живеят продуктите.
+        Трето ниво не е позволено. Редът на отделите в менюто се задава с число (navOrder).
+      </p>
       <label>
         {editedCategory
-          ? `Редактирай категория ${editedCategory.name}`
-          : 'Създай нова категория'}
+          ? `Редактирай ${isEditingRoot ? 'отдел' : 'подкатегория'} ${editedCategory.name}`
+          : creatingRoot
+            ? 'Създай нов отдел'
+            : 'Създай нова подкатегория'}
       </label>
+      {saveError && (
+        <div className="mb-2 text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 text-sm">
+          {saveError}
+        </div>
+      )}
       <form onSubmit={saveCategory}>
         <div className="flex gap-1">
           <input
             type="text"
-            placeholder={'Име на категорията'}
+            placeholder={creatingRoot ? 'Име на отдела' : 'Име на подкатегорията'}
             onChange={ev => setName(ev.target.value)}
             value={name}/>
           <select
                   onChange={ev => setParentCategory(ev.target.value)}
                   value={parentCategory}>
-            <option value="">Няма родителска категория</option>
-            {categories.length > 0 && categories.map(category => (
+            <option value="">Няма родител (нов отдел)</option>
+            {roots.map(category => (
               <option key={category._id} value={category._id}>{category.name}</option>
             ))}
           </select>
         </div>
+        {creatingRoot && (
+          <div className="mb-2">
+            <label className="block">Ред в менюто (navOrder)</label>
+            <input
+              type="number"
+              min="0"
+              value={navOrder}
+              onChange={ev => setNavOrder(ev.target.value)}
+              placeholder="1 = Парфюми, 2 = Козметика, 3 = Бижута"
+            />
+          </div>
+        )}
         <div className="mb-2">
           <label className="block mb-1">Снимка</label>
           <div className="mb-2 flex flex-wrap gap-2 items-center">
@@ -144,7 +237,7 @@ function Categories({swal}) {
                 </button>
                 <Image
                   src={image}
-                  alt="genre"
+                  alt=""
                   width={96}
                   height={96}
                   className="h-full w-full rounded object-cover"
@@ -215,12 +308,7 @@ function Categories({swal}) {
           {editedCategory && (
             <button
               type="button"
-              onClick={() => {
-                setEditedCategory(null);
-                setName('');
-                setParentCategory('');
-                setProperties([]);
-              }}
+              onClick={resetForm}
               className="btn-default">Отказ</button>
           )}
           <button type="submit"
@@ -233,16 +321,22 @@ function Categories({swal}) {
         <table className="basic mt-4">
           <thead>
           <tr>
-            <td>Име на категорията</td>
+            <td>Име</td>
+            <td>Тип</td>
             <td>Снимка</td>
-            <td>Родителска категория</td>
+            <td>Ред в менюто</td>
             <td></td>
           </tr>
           </thead>
           <tbody>
-          {categories.length > 0 && categories.map(category => (
+          {treeRows.map(({category, isRoot}) => (
             <tr key={category._id}>
-              <td>{category.name}</td>
+              <td>
+                <span className={isRoot ? 'font-semibold' : 'pl-6 inline-block'}>
+                  {isRoot ? category.name : `↳ ${category.name}`}
+                </span>
+              </td>
+              <td>{isRoot ? 'Отдел' : 'Подкатегория'}</td>
               <td>
                 {category.image && (
                   <Image
@@ -254,7 +348,24 @@ function Categories({swal}) {
                   />
                 )}
               </td>
-              <td>{category?.parent?.name}</td>
+              <td>
+                {isRoot ? (
+                  <input
+                    type="number"
+                    min="0"
+                    className="mb-0 w-20"
+                    defaultValue={category.navOrder || 0}
+                    onBlur={ev => {
+                      const next = Number(ev.target.value || 0);
+                      if (next !== (category.navOrder || 0)) {
+                        saveRootOrder(category, next);
+                      }
+                    }}
+                  />
+                ) : (
+                  '—'
+                )}
+              </td>
               <td>
                 <button
                   onClick={() => editCategory(category)}

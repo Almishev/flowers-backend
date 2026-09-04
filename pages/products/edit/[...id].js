@@ -20,7 +20,7 @@ export default function EditProductPage() {
 
   return (
     <Layout>
-      <h1>Редактирай парфюм</h1>
+      <h1>Редактирай продукт</h1>
       {productInfo && (
         <ProductForm {...productInfo} />
       )}

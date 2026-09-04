@@ -4,6 +4,38 @@ import axios from "axios";
 import Spinner from "@/components/Spinner";
 import {ReactSortable} from "react-sortablejs";
 
+function categoryIdOf(value) {
+  if (!value) return '';
+  if (typeof value === 'object') return value._id || '';
+  return value;
+}
+
+function parentIdOf(category) {
+  if (!category?.parent) return '';
+  return typeof category.parent === 'object' ? category.parent._id : category.parent;
+}
+
+function findRoot(categories, categoryId) {
+  let cat = categories.find(c => c._id === categoryId);
+  if (!cat) return null;
+  const seen = new Set();
+  while (parentIdOf(cat)) {
+    if (seen.has(cat._id)) break;
+    seen.add(cat._id);
+    const next = categories.find(c => c._id === parentIdOf(cat));
+    if (!next) break;
+    cat = next;
+  }
+  return cat;
+}
+
+function isPerfumeDepartment(root) {
+  if (!root) return false;
+  const slug = (root.slug || '').toLowerCase();
+  const name = (root.name || '').toLowerCase();
+  return slug === 'parfyumi' || name === 'парфюми';
+}
+
 export default function ProductForm({
   _id,
   title:existingTitle,
@@ -20,7 +52,7 @@ export default function ProductForm({
 }) {
   const [title,setTitle] = useState(existingTitle || '');
   const [description,setDescription] = useState(existingDescription || '');
-  const [category,setCategory] = useState(assignedCategory || '');
+  const [category,setCategory] = useState(categoryIdOf(assignedCategory));
   const [productProperties,setProductProperties] = useState(assignedProperties || {});
   const [price,setPrice] = useState(existingPrice || '');
   const [images,setImages] = useState(existingImages || []);
@@ -32,6 +64,7 @@ export default function ProductForm({
   const [goToProducts,setGoToProducts] = useState(false);
   const [isUploading,setIsUploading] = useState(false);
   const [categories,setCategories] = useState([]);
+  const [saveError,setSaveError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -40,27 +73,40 @@ export default function ProductForm({
     });
   }, []);
 
+  const roots = categories
+    .filter(c => !c.parent)
+    .sort((a, b) => (a.navOrder || 0) - (b.navOrder || 0) || a.name.localeCompare(b.name));
+  const leaves = categories.filter(c => c.parent);
+  const selectedRoot = findRoot(categories, category);
+  const showPerfumeFields = isPerfumeDepartment(selectedRoot);
+
   async function saveProduct(ev) {
     ev.preventDefault();
+    setSaveError('');
+    const perfume = showPerfumeFields;
     const data = {
       title,
       description,
       brand,
-      volume,
-      concentration,
-      gender,
+      volume: perfume ? volume : '',
+      concentration: perfume ? concentration : '',
+      gender: perfume ? gender : '',
       price,
       images,
       category,
       stock,
       properties: productProperties,
     };
-    if (_id) {
-      await axios.put('/api/products', {...data,_id});
-    } else {
-      await axios.post('/api/products', data);
+    try {
+      if (_id) {
+        await axios.put('/api/products', {...data,_id});
+      } else {
+        await axios.post('/api/products', data);
+      }
+      setGoToProducts(true);
+    } catch (error) {
+      setSaveError(error.response?.data?.error || 'Грешка при запис на продукта');
     }
-    setGoToProducts(true);
   }
 
   if (goToProducts) {
@@ -100,8 +146,8 @@ export default function ProductForm({
     let catInfo = categories.find(({_id}) => _id === category);
     if (catInfo) {
       propertiesToFill.push(...(catInfo.properties || []));
-      while (catInfo?.parent?._id) {
-        const parentCat = categories.find(({_id}) => _id === catInfo?.parent?._id);
+      while (parentIdOf(catInfo)) {
+        const parentCat = categories.find(({_id}) => _id === parentIdOf(catInfo));
         if (!parentCat) break;
         propertiesToFill.push(...(parentCat.properties || []));
         catInfo = parentCat;
@@ -111,7 +157,12 @@ export default function ProductForm({
 
   return (
     <form onSubmit={saveProduct}>
-      <label>Име на парфюма</label>
+      {saveError && (
+        <div className="mb-2 text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2 text-sm">
+          {saveError}
+        </div>
+      )}
+      <label>Име на продукта</label>
       <input
         type="text"
         placeholder="напр. Chanel N°5 Eau de Parfum"
@@ -128,54 +179,65 @@ export default function ProductForm({
         onChange={ev => setBrand(ev.target.value)}
       />
 
-      <label>Категория</label>
+      <label>Подкатегория</label>
       <select
         value={category}
         onChange={ev => setCategory(ev.target.value)}
+        required
       >
-        <option value="">Без категория</option>
-        {categories.length > 0 && categories.map(c => (
-          <option key={c._id} value={c._id}>{c.name}</option>
+        <option value="">Избери подкатегория</option>
+        {roots.map(root => (
+          <optgroup key={root._id} label={root.name}>
+            {leaves
+              .filter(leaf => parentIdOf(leaf) === root._id)
+              .map(leaf => (
+                <option key={leaf._id} value={leaf._id}>{leaf.name}</option>
+              ))}
+          </optgroup>
         ))}
       </select>
 
-      <label>За кого е</label>
-      <select
-        value={gender}
-        onChange={ev => setGender(ev.target.value)}
-      >
-        <option value="">Не е посочено</option>
-        <option value="Дамски">Дамски</option>
-        <option value="Мъжки">Мъжки</option>
-        <option value="Унисекс">Унисекс</option>
-      </select>
+      {showPerfumeFields && (
+        <>
+          <label>За кого е</label>
+          <select
+            value={gender}
+            onChange={ev => setGender(ev.target.value)}
+          >
+            <option value="">Не е посочено</option>
+            <option value="Дамски">Дамски</option>
+            <option value="Мъжки">Мъжки</option>
+            <option value="Унисекс">Унисекс</option>
+          </select>
 
-      <label>Концентрация</label>
-      <select
-        value={concentration}
-        onChange={ev => setConcentration(ev.target.value)}
-      >
-        <option value="">Не е посочено</option>
-        <option value="Parfum">Parfum</option>
-        <option value="Eau de Parfum">Eau de Parfum</option>
-        <option value="Eau de Toilette">Eau de Toilette</option>
-        <option value="Eau de Cologne">Eau de Cologne</option>
-        <option value="Body mist">Body mist</option>
-      </select>
+          <label>Концентрация</label>
+          <select
+            value={concentration}
+            onChange={ev => setConcentration(ev.target.value)}
+          >
+            <option value="">Не е посочено</option>
+            <option value="Parfum">Parfum</option>
+            <option value="Eau de Parfum">Eau de Parfum</option>
+            <option value="Eau de Toilette">Eau de Toilette</option>
+            <option value="Eau de Cologne">Eau de Cologne</option>
+            <option value="Body mist">Body mist</option>
+          </select>
 
-      <label>Обем</label>
-      <select
-        value={volume}
-        onChange={ev => setVolume(ev.target.value)}
-      >
-        <option value="">Не е посочено</option>
-        <option value="30 ml">30 ml</option>
-        <option value="50 ml">50 ml</option>
-        <option value="75 ml">75 ml</option>
-        <option value="100 ml">100 ml</option>
-        <option value="125 ml">125 ml</option>
-        <option value="200 ml">200 ml</option>
-      </select>
+          <label>Обем</label>
+          <select
+            value={volume}
+            onChange={ev => setVolume(ev.target.value)}
+          >
+            <option value="">Не е посочено</option>
+            <option value="30 ml">30 ml</option>
+            <option value="50 ml">50 ml</option>
+            <option value="75 ml">75 ml</option>
+            <option value="100 ml">100 ml</option>
+            <option value="125 ml">125 ml</option>
+            <option value="200 ml">200 ml</option>
+          </select>
+        </>
+      )}
 
       <label>Наличност (бр.)</label>
       <input
@@ -243,7 +305,7 @@ export default function ProductForm({
 
       <label>Описание</label>
       <textarea
-        placeholder="описание на аромата, нотки, за какъв повод е подходящ"
+        placeholder="описание на продукта"
         value={description}
         onChange={ev => setDescription(ev.target.value)}
       />
@@ -265,4 +327,3 @@ export default function ProductForm({
     </form>
   );
 }
-

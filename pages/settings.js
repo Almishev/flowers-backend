@@ -111,7 +111,7 @@ function SettingsPage({swal}) {
     <Layout>
       <h1>Настройки</h1>
       <form onSubmit={saveSettings} className="max-w-md">
-        <label>Препоръчан парфюм за началната страница</label>
+        <label>Препоръчан продукт за началната страница</label>
         <select 
           value={featuredProductId}
           onChange={ev => setFeaturedProductId(ev.target.value)}

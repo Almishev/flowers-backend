@@ -14,13 +14,13 @@ export default function Products() {
 
   return (
     <Layout>
-      <Link className="btn-primary" href={'/products/new'}>Добави нов парфюм</Link>
+      <Link className="btn-primary" href={'/products/new'}>Добави нов продукт</Link>
       <table className="basic mt-2">
         <thead>
           <tr>
-            <td>Име на парфюма</td>
+            <td>Име на продукта</td>
             <td>Марка</td>
-            <td>Обем</td>
+            <td>Категория</td>
             <td>Наличност</td>
             <td></td>
           </tr>
@@ -30,7 +30,7 @@ export default function Products() {
             <tr key={product._id}>
               <td>{product.title}</td>
               <td>{product.brand || '—'}</td>
-              <td>{product.volume || '—'}</td>
+              <td>{product.category?.name || '—'}</td>
               <td>{product.stock ?? 0}</td>
               <td>
                 <Link className="btn-default" href={'/products/edit/'+product._id}>
