@@ -242,6 +242,7 @@ export default function ProductForm({
             <option value="75 ml">75 ml</option>
             <option value="100 ml">100 ml</option>
             <option value="125 ml">125 ml</option>
+            <option value="150 ml">150 ml</option>
             <option value="200 ml">200 ml</option>
           </select>
         </>
