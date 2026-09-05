@@ -20,6 +20,7 @@ export default function Products() {
           <tr>
             <td>Име на продукта</td>
             <td>Марка</td>
+            <td>Обем</td>
             <td>Категория</td>
             <td>Наличност</td>
             <td></td>
@@ -30,6 +31,7 @@ export default function Products() {
             <tr key={product._id}>
               <td>{product.title}</td>
               <td>{product.brand || '—'}</td>
+              <td>{product.volume || '—'}</td>
               <td>{product.category?.name || '—'}</td>
               <td>{product.stock ?? 0}</td>
               <td>

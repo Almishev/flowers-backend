@@ -76,7 +76,7 @@ export default function ProductForm({
   const roots = categories
     .filter(c => !c.parent)
     .sort((a, b) => (a.navOrder || 0) - (b.navOrder || 0) || a.name.localeCompare(b.name));
-  const leaves = categories.filter(c => c.parent);
+  const childrenOf = (rootId) => categories.filter(c => parentIdOf(c) === rootId);
   const selectedRoot = findRoot(categories, category);
   const showPerfumeFields = isPerfumeDepartment(selectedRoot);
 
@@ -179,22 +179,30 @@ export default function ProductForm({
         onChange={ev => setBrand(ev.target.value)}
       />
 
-      <label>Подкатегория</label>
+      <label>Категория</label>
       <select
         value={category}
         onChange={ev => setCategory(ev.target.value)}
         required
       >
-        <option value="">Избери подкатегория</option>
-        {roots.map(root => (
-          <optgroup key={root._id} label={root.name}>
-            {leaves
-              .filter(leaf => parentIdOf(leaf) === root._id)
-              .map(leaf => (
+        <option value="">Избери категория</option>
+        {roots.map(root => {
+          const children = childrenOf(root._id);
+          if (children.length === 0) {
+            return (
+              <option key={root._id} value={root._id}>
+                {root.name}
+              </option>
+            );
+          }
+          return (
+            <optgroup key={root._id} label={root.name}>
+              {children.map(leaf => (
                 <option key={leaf._id} value={leaf._id}>{leaf.name}</option>
               ))}
-          </optgroup>
-        ))}
+            </optgroup>
+          );
+        })}
       </select>
 
       {showPerfumeFields && (

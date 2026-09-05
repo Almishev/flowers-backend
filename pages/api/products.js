@@ -7,7 +7,7 @@ import {generateUniqueSlug} from "@/lib/slugify";
 
 async function assertLeafCategory(categoryId) {
   if (!categoryId) {
-    const error = new Error('Продуктът трябва да е в подкатегория, не в отдел.');
+    const error = new Error('Изберете категория за продукта.');
     error.status = 400;
     throw error;
   }
@@ -17,8 +17,9 @@ async function assertLeafCategory(categoryId) {
     error.status = 400;
     throw error;
   }
-  if (!category.parent) {
-    const error = new Error('Продуктът трябва да е в подкатегория, не в отдел.');
+  const childCount = await Category.countDocuments({parent: categoryId});
+  if (childCount > 0) {
+    const error = new Error('Отдел с подкатегории приема продукти само в подкатегория.');
     error.status = 400;
     throw error;
   }

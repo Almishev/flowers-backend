@@ -12,7 +12,7 @@ function SettingsPage({swal}) {
   const [heroVideoMobile, setHeroVideoMobile] = useState('');
   const [heroImage, setHeroImage] = useState('');
   const [heroTitle, setHeroTitle] = useState('Парфюмен магазин');
-  const [heroSubtitle, setHeroSubtitle] = useState('оригинални парфюми и аромати');
+  const [heroSubtitle, setHeroSubtitle] = useState('Оригинални тестери в оригинални опаковки.');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isUploadingDesktop, setIsUploadingDesktop] = useState(false);
@@ -148,7 +148,7 @@ function SettingsPage({swal}) {
           <label>Подзаглавие на Hero секцията</label>
           <input 
             type="text" 
-            placeholder="оригинални парфюми и аромати"
+            placeholder="Оригинални тестери в оригинални опаковки."
             value={heroSubtitle}
             onChange={ev => setHeroSubtitle(ev.target.value)}
           />

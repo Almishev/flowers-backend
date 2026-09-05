@@ -29,7 +29,7 @@ export default function DeleteProductPage() {
   return (
     <Layout>
       <h1 className="text-center">Наистина ли искате да изтриете
-        &nbsp;&quot;{productInfo?.title}&quot;?
+        &nbsp;&quot;{productInfo?.title}{productInfo?.volume ? ` — ${productInfo.volume}` : ''}&quot;?
       </h1>
       <div className="flex gap-2 justify-center">
         <button
