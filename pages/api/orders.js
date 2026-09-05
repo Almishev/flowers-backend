@@ -10,6 +10,15 @@ export default async function handle(req, res) {
 
   if (method === 'GET') {
     try {
+      if (req.query.id) {
+        const order = await Order.findById(req.query.id);
+        if (!order) {
+          res.status(404).json({error: 'Поръчката не е намерена.'});
+          return;
+        }
+        res.json(order);
+        return;
+      }
       const orders = await Order.find({}, null, {
         sort: {createdAt: -1},
       });

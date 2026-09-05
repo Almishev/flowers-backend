@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import Link from "next/link";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -100,6 +101,14 @@ export default function OrdersPage() {
                 </td>
                 <td>{order.paymentMethod || 'cash'}</td>
                 <td>
+                  <Link
+                    href={`/orders/print/${order._id}`}
+                    target="_blank"
+                    className="btn-default"
+                    style={{marginRight: 8, marginBottom: 6}}
+                  >
+                    Принтирай
+                  </Link>
                   <button
                     onClick={() => deleteOrder(order._id)}
                     className="btn-red"
