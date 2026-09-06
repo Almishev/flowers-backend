@@ -40,7 +40,7 @@ export default async function handle(req, res) {
   }
 
   if (method === 'POST') {
-    const {title,description,price,images,category,properties,stock,brand,volume,concentration,gender} = req.body;
+    const {title,description,price,images,category,properties,stock,brand,volume,concentration,gender,scentFamily,topNotes,heartNotes,baseNotes} = req.body;
     await assertLeafCategory(category);
 
     // Генерираме уникален slug на база заглавието
@@ -57,6 +57,10 @@ export default async function handle(req, res) {
       volume,
       concentration,
       gender,
+      scentFamily,
+      topNotes,
+      heartNotes,
+      baseNotes,
       price,
       images,
       category,
@@ -67,7 +71,7 @@ export default async function handle(req, res) {
   }
 
   if (method === 'PUT') {
-    const {title,description,price,images,category,properties,_id,stock,brand,volume,concentration,gender} = req.body;
+    const {title,description,price,images,category,properties,_id,stock,brand,volume,concentration,gender,scentFamily,topNotes,heartNotes,baseNotes} = req.body;
     await assertLeafCategory(category);
 
     const existing = await Product.findById(_id);
@@ -82,7 +86,7 @@ export default async function handle(req, res) {
 
     await Product.updateOne(
       {_id},
-      {title, slug, description, brand, volume, concentration, gender, price, images, category, properties, stock}
+      {title, slug, description, brand, volume, concentration, gender, scentFamily, topNotes, heartNotes, baseNotes, price, images, category, properties, stock}
     );
     res.json(true);
   }

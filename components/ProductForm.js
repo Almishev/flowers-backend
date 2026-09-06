@@ -49,6 +49,10 @@ export default function ProductForm({
   volume:existingVolume,
   concentration:existingConcentration,
   gender:existingGender,
+  scentFamily:existingScentFamily,
+  topNotes:existingTopNotes,
+  heartNotes:existingHeartNotes,
+  baseNotes:existingBaseNotes,
 }) {
   const [title,setTitle] = useState(existingTitle || '');
   const [description,setDescription] = useState(existingDescription || '');
@@ -61,6 +65,10 @@ export default function ProductForm({
   const [volume,setVolume] = useState(existingVolume || '');
   const [concentration,setConcentration] = useState(existingConcentration || '');
   const [gender,setGender] = useState(existingGender || '');
+  const [scentFamily,setScentFamily] = useState(existingScentFamily || '');
+  const [topNotes,setTopNotes] = useState(existingTopNotes || '');
+  const [heartNotes,setHeartNotes] = useState(existingHeartNotes || '');
+  const [baseNotes,setBaseNotes] = useState(existingBaseNotes || '');
   const [goToProducts,setGoToProducts] = useState(false);
   const [isUploading,setIsUploading] = useState(false);
   const [categories,setCategories] = useState([]);
@@ -91,6 +99,10 @@ export default function ProductForm({
       volume: perfume ? volume : '',
       concentration: perfume ? concentration : '',
       gender: perfume ? gender : '',
+      scentFamily: perfume ? scentFamily : '',
+      topNotes: perfume ? topNotes : '',
+      heartNotes: perfume ? heartNotes : '',
+      baseNotes: perfume ? baseNotes : '',
       price,
       images,
       category,
@@ -245,6 +257,48 @@ export default function ProductForm({
             <option value="150 ml">150 ml</option>
             <option value="200 ml">200 ml</option>
           </select>
+
+          <label>Ароматно семейство</label>
+          <select
+            value={scentFamily}
+            onChange={ev => setScentFamily(ev.target.value)}
+          >
+            <option value="">Не е посочено</option>
+            <option value="Цитрусов">Цитрусов</option>
+            <option value="Цветен">Цветен</option>
+            <option value="Дървесен">Дървесен</option>
+            <option value="Ориенталски">Ориенталски</option>
+            <option value="Фужерен">Фужерен</option>
+            <option value="Ориенталско-фужерен">Ориенталско-фужерен</option>
+            <option value="Шипър">Шипър</option>
+            <option value="Ароматен">Ароматен</option>
+            <option value="Кожен">Кожен</option>
+            <option value="Воден">Воден</option>
+          </select>
+
+          <label>Връхни нотки</label>
+          <input
+            type="text"
+            placeholder="напр. бергамот, лимон, розов пипер"
+            value={topNotes}
+            onChange={ev => setTopNotes(ev.target.value)}
+          />
+
+          <label>Сърдечни нотки</label>
+          <input
+            type="text"
+            placeholder="напр. лавандула, жасмин, пипер"
+            value={heartNotes}
+            onChange={ev => setHeartNotes(ev.target.value)}
+          />
+
+          <label>Базови нотки</label>
+          <input
+            type="text"
+            placeholder="напр. кедър, амбра, ветивер"
+            value={baseNotes}
+            onChange={ev => setBaseNotes(ev.target.value)}
+          />
         </>
       )}
 
@@ -314,7 +368,7 @@ export default function ProductForm({
 
       <label>Описание</label>
       <textarea
-        placeholder="описание на продукта"
+        placeholder="напр. Свеж цитрусов аромат за мъже, подходящ за ежедневие и офис. 2–3 изречения."
         value={description}
         onChange={ev => setDescription(ev.target.value)}
       />

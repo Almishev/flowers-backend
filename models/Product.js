@@ -8,6 +8,10 @@ const ProductSchema = new Schema({
   volume: { type: String, default: "" },
   concentration: { type: String, default: "" },
   gender: { type: String, default: "" },
+  scentFamily: { type: String, default: "" },
+  topNotes: { type: String, default: "" },
+  heartNotes: { type: String, default: "" },
+  baseNotes: { type: String, default: "" },
 
   price: { type: Number, required: true },
   currency: { type: String, default: "EUR" },
