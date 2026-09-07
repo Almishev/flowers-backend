@@ -14,6 +14,7 @@ const ProductSchema = new Schema({
   baseNotes: { type: String, default: "" },
 
   price: { type: Number, required: true },
+  compareAtPrice: { type: Number, default: null },
   currency: { type: String, default: "EUR" },
 
   images: [{ type: String }],

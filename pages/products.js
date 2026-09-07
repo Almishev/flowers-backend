@@ -1,20 +1,179 @@
 import Layout from "@/components/Layout";
 import Link from "next/link";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import axios from "axios";
 
+const PAGE_SIZE = 20;
+
+function parentIdOf(category) {
+  if (!category?.parent) return '';
+  return typeof category.parent === 'object' ? (category.parent._id || '') : category.parent;
+}
+
 export default function Products() {
-  const [products,setProducts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [subcategoryId, setSubcategoryId] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    axios.get('/api/products').then(response => {
-      setProducts(response.data);
-    });
+    axios.get('/api/categories').then((res) => {
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    }).catch(() => setCategories([]));
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const delay = search.trim() ? 300 : 0;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      axios.get('/api/products', {
+        params: {
+          page,
+          limit: PAGE_SIZE,
+          search: search.trim() || undefined,
+          department: departmentId || undefined,
+          subcategory: subcategoryId || undefined,
+          stock: stockFilter || undefined,
+        },
+        signal: controller.signal,
+      }).then((res) => {
+        setProducts(res.data?.products || []);
+        setTotalCount(res.data?.totalCount || 0);
+        setTotalPages(res.data?.totalPages || 1);
+        if (res.data?.page && res.data.page !== page) setPage(res.data.page);
+      }).catch((error) => {
+        if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError') return;
+        setProducts([]);
+        setTotalCount(0);
+        setTotalPages(1);
+      }).finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search, departmentId, subcategoryId, stockFilter, page]);
+
+  const departments = useMemo(
+    () => categories
+      .filter((cat) => !cat.parent)
+      .sort((a, b) => (a.navOrder || 0) - (b.navOrder || 0) || String(a.name).localeCompare(b.name, 'bg')),
+    [categories]
+  );
+
+  const subcategories = useMemo(
+    () => categories
+      .filter((cat) => departmentId && parentIdOf(cat) === departmentId)
+      .sort((a, b) => String(a.name).localeCompare(b.name, 'bg')),
+    [categories, departmentId]
+  );
+
+  const currentPage = Math.min(page, totalPages);
+  const from = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const to = Math.min(currentPage * PAGE_SIZE, totalCount);
+  const hasFilters = !!(search.trim() || departmentId || subcategoryId || stockFilter);
+
+  function clearFilters() {
+    setSearch('');
+    setDepartmentId('');
+    setSubcategoryId('');
+    setStockFilter('');
+    setPage(1);
+  }
 
   return (
     <Layout>
-      <Link className="btn-primary" href={'/products/new'}>Добави нов продукт</Link>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h1 className="mb-0">Продукти</h1>
+        <Link className="btn-primary" href={'/products/new'}>Добави нов продукт</Link>
+      </div>
+
+      <div className="bg-white rounded-sm shadow-md p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label>Търсене</label>
+            <input
+              type="search"
+              placeholder="Име или марка"
+              value={search}
+              onChange={(ev) => {
+                setSearch(ev.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div>
+            <label>Отдел</label>
+            <select
+              value={departmentId}
+              onChange={(ev) => {
+                setDepartmentId(ev.target.value);
+                setSubcategoryId('');
+                setPage(1);
+              }}
+            >
+              <option value="">Всички отдели</option>
+              {departments.map((dept) => (
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Подкатегория</label>
+            <select
+              value={subcategoryId}
+              onChange={(ev) => {
+                setSubcategoryId(ev.target.value);
+                setPage(1);
+              }}
+              disabled={!departmentId || subcategories.length === 0}
+            >
+              <option value="">Всички подкатегории</option>
+              {subcategories.map((cat) => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Наличност</label>
+            <select
+              value={stockFilter}
+              onChange={(ev) => {
+                setStockFilter(ev.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Всички</option>
+              <option value="in">В наличност</option>
+              <option value="low">Под 3 бр.</option>
+              <option value="out">Изчерпани</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+          <p className="text-sm text-gray-500 m-0">
+            {loading
+              ? 'Зареждане...'
+              : `Показани ${from}–${to} от ${totalCount}`}
+          </p>
+          {hasFilters && (
+            <button type="button" className="btn-default" onClick={clearFilters}>
+              Изчисти филтрите
+            </button>
+          )}
+        </div>
+      </div>
+
       <table className="basic mt-2">
         <thead>
           <tr>
@@ -27,13 +186,22 @@ export default function Products() {
           </tr>
         </thead>
         <tbody>
+          {!loading && products.length === 0 && (
+            <tr>
+              <td colSpan={6} className="py-6 text-gray-500">
+                Няма продукти по избраните филтри.
+              </td>
+            </tr>
+          )}
           {products.map(product => (
             <tr key={product._id}>
               <td>{product.title}</td>
               <td>{product.brand || '—'}</td>
               <td>{product.volume || '—'}</td>
               <td>{product.category?.name || '—'}</td>
-              <td>{product.stock ?? 0}</td>
+              <td className={(product.stock ?? 0) <= 0 ? 'text-red-600 font-semibold' : ''}>
+                {product.stock ?? 0}
+              </td>
               <td>
                 <Link className="btn-default" href={'/products/edit/'+product._id}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -52,7 +220,30 @@ export default function Products() {
           ))}
         </tbody>
       </table>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <button
+            type="button"
+            className="btn-default"
+            disabled={currentPage <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Назад
+          </button>
+          <span className="text-sm text-gray-600">
+            Страница {currentPage} от {totalPages}
+          </span>
+          <button
+            type="button"
+            className="btn-default"
+            disabled={currentPage >= totalPages || loading}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Напред
+          </button>
+        </div>
+      )}
     </Layout>
   );
 }
-

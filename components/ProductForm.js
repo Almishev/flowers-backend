@@ -41,6 +41,7 @@ export default function ProductForm({
   title:existingTitle,
   description:existingDescription,
   price:existingPrice,
+  compareAtPrice:existingCompareAtPrice,
   images:existingImages,
   category:assignedCategory,
   properties:assignedProperties,
@@ -59,6 +60,7 @@ export default function ProductForm({
   const [category,setCategory] = useState(categoryIdOf(assignedCategory));
   const [productProperties,setProductProperties] = useState(assignedProperties || {});
   const [price,setPrice] = useState(existingPrice || '');
+  const [compareAtPrice,setCompareAtPrice] = useState(existingCompareAtPrice ?? '');
   const [images,setImages] = useState(existingImages || []);
   const [stock,setStock] = useState(existingStock ?? 0);
   const [brand,setBrand] = useState(existingBrand || '');
@@ -104,6 +106,7 @@ export default function ProductForm({
       heartNotes: perfume ? heartNotes : '',
       baseNotes: perfume ? baseNotes : '',
       price,
+      compareAtPrice: compareAtPrice === '' ? null : compareAtPrice,
       images,
       category,
       stock,
@@ -373,13 +376,28 @@ export default function ProductForm({
         onChange={ev => setDescription(ev.target.value)}
       />
 
-      <label>Цена (в EUR)</label>
+      <label>Цена (EUR)</label>
       <input
         type="number"
-        placeholder="цена"
+        step="0.01"
+        min="0"
+        placeholder="това, което клиентът плаща"
         value={price}
         onChange={ev => setPrice(ev.target.value)}
       />
+
+      <label>Редовна цена (EUR)</label>
+      <input
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder="по желание, само при промоция"
+        value={compareAtPrice}
+        onChange={ev => setCompareAtPrice(ev.target.value)}
+      />
+      <p className="text-sm text-gray-500 mb-2">
+        Попълнете само ако продуктът е в промоция и редовната цена е по-висока от цената за плащане. Празно поле = без промо.
+      </p>
 
       <button
         type="submit"
