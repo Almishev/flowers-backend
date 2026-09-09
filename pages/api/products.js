@@ -6,6 +6,27 @@ import {deleteS3Objects} from "@/lib/s3";
 import {generateUniqueSlug} from "@/lib/slugify";
 import mongoose from "mongoose";
 
+function uniqueImageUrls(urls) {
+  return [...new Set((urls || []).filter(Boolean))];
+}
+
+async function deleteUnusedS3Images(urls) {
+  const candidates = uniqueImageUrls(urls);
+  if (candidates.length === 0) return;
+
+  const stillUsed = await Product.find({ images: { $in: candidates } })
+    .select('images')
+    .lean();
+  const used = new Set();
+  for (const product of stillUsed) {
+    for (const img of product.images || []) {
+      used.add(img);
+    }
+  }
+
+  await deleteS3Objects(candidates.filter((url) => !used.has(url)));
+}
+
 async function assertLeafCategory(categoryId) {
   if (!categoryId) {
     const error = new Error('Изберете категория за продукта.');
@@ -153,6 +174,12 @@ export default async function handle(req, res) {
       {_id},
       {title, slug, description, brand, volume, concentration, gender, scentFamily, topNotes, heartNotes, baseNotes, price, compareAtPrice: parseCompareAtPrice(compareAtPrice), images, category, properties, stock}
     );
+
+    const oldImages = Array.isArray(existing?.images) ? existing.images : [];
+    const newImages = new Set(uniqueImageUrls(images));
+    const removedImages = uniqueImageUrls(oldImages).filter((url) => !newImages.has(url));
+    await deleteUnusedS3Images(removedImages);
+
     res.json(true);
   }
 
@@ -161,8 +188,7 @@ export default async function handle(req, res) {
       const prod = await Product.findById(req.query.id);
       const images = Array.isArray(prod?.images) ? prod.images : [];
       await Product.deleteOne({_id:req.query.id});
-      // Best-effort S3 cleanup
-      await deleteS3Objects(images);
+      await deleteUnusedS3Images(images);
       res.json(true);
     }
   }

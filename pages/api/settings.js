@@ -35,10 +35,13 @@ export default async function handle(req, res) {
       currentSettingsObj[setting.name] = setting.value;
     });
     
-    // Delete old desktop video if it's being replaced or media type changed to image
-    if (currentSettingsObj.heroVideoDesktop && 
-        (currentSettingsObj.heroVideoDesktop !== heroVideoDesktop || 
-         heroMediaType === 'image')) {
+    const nextDesktop = heroVideoDesktop || '';
+    const nextMobile = heroVideoMobile || '';
+    const nextImage = heroImage || '';
+
+    // Delete S3 only when the stored URL is replaced or cleared — not because the radio changed.
+    if (currentSettingsObj.heroVideoDesktop &&
+        currentSettingsObj.heroVideoDesktop !== nextDesktop) {
       try {
         await deleteS3Object(currentSettingsObj.heroVideoDesktop);
         console.log('Deleted old desktop video:', currentSettingsObj.heroVideoDesktop);
@@ -46,11 +49,9 @@ export default async function handle(req, res) {
         console.error('Error deleting old desktop video:', error);
       }
     }
-    
-    // Delete old mobile video if it's being replaced or media type changed to image
-    if (currentSettingsObj.heroVideoMobile && 
-        (currentSettingsObj.heroVideoMobile !== heroVideoMobile || 
-         heroMediaType === 'image')) {
+
+    if (currentSettingsObj.heroVideoMobile &&
+        currentSettingsObj.heroVideoMobile !== nextMobile) {
       try {
         await deleteS3Object(currentSettingsObj.heroVideoMobile);
         console.log('Deleted old mobile video:', currentSettingsObj.heroVideoMobile);
@@ -58,11 +59,9 @@ export default async function handle(req, res) {
         console.error('Error deleting old mobile video:', error);
       }
     }
-    
-    // Delete old image if it's being replaced or media type changed to video
-    if (currentSettingsObj.heroImage && 
-        (currentSettingsObj.heroImage !== heroImage || 
-         heroMediaType === 'video')) {
+
+    if (currentSettingsObj.heroImage &&
+        currentSettingsObj.heroImage !== nextImage) {
       try {
         await deleteS3Object(currentSettingsObj.heroImage);
         console.log('Deleted old hero image:', currentSettingsObj.heroImage);
